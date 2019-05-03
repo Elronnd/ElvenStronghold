@@ -1,0 +1,22 @@
+# used by the library downloader
+.cache
+lib
+
+*.so
+*.dll
+*.o
+
+.precomp
+
+# vim turds
+.*.swp
+.*.swo
+.*.swn
+.*.swm
+.*.swl
+#anonymous vim turds
+.swp
+.swo
+.swn
+.swm
+.swl
