@@ -1,3 +1,5 @@
+unit module rng;
+
 class WeightedRandom {
 	has @.angery;
 	has @.weightings;
