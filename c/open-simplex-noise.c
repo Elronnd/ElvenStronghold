@@ -2245,4 +2245,3 @@ double open_simplex_noise4(struct osn_context *ctx, double x, double y, double z
 
 	return value / NORM_CONSTANT_4D;
 }
-
