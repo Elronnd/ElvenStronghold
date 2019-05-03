@@ -1,0 +1,6 @@
+- Install perl6
+- zef install SDL2::Raw
+- run the provided 'fetch-libs.sh'
+- go into the 'c' directory and run make
+- run the provided 'es' script
+- if you are on windows, some of these steps can be slightly challenging (although they do work fine through WSL).  You're on your own for now in that case, although better support is hypothetically something that will happen
