@@ -1,8 +1,10 @@
 CC := clang
 LD := $(CC)
-CFLAGS := -std=c17 -Wall -Wextra -Ofast -ffast-math -finline-functions -c
-OBJ := open-simplex.o fbnice.o
-HDR := stronghold.h
+# the keyword-macro warning occurs when you try to use a macro to redefine a keyword (like 'int')
+# you're not supposed to do that.  But I want to  ¯\_(ツ)_/¯
+CFLAGS := -std=c17 -Wall -Wextra -Wpedantic -Wno-keyword-macro -Werror -Ofast -ffast-math -finline-functions -c
+OBJ := open-simplex.o fbnice.o stronghold.o
+HDR := stronghold.h open-simplex.h
 
 ifeq ($(OS),Windows_NT)
 	LIBNAME := stronghold.dll

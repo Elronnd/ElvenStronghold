@@ -1,16 +1,19 @@
 // vim: ft=c
+#ifndef STRONGHOLD_H
+#define STRONGHOLD_H
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
+
 #include <assert.h>
 //@portability: this is needed on windows for some reason, idk why
 #ifndef static_assert
 # define static_assert _Static_assert
 #endif
 
-#ifndef STRONGHOLD_H
-#define STRONGHOLD_H
 
 typedef uint8_t u8;
 typedef int8_t i8;
@@ -49,13 +52,27 @@ typedef ssize_t isz;
 #define double t_bad(double)
 #define size_t t_bad(size_t)
 #define ssize_t t_bad(ssize_t)
+#undef t_bad
 
-#define alloc(sz) calloc(1, sz)
+inline void *alloc(usz sz) {
+	void *ret = calloc(1, sz);
+
+	if (ret == NULL) {
+		abort();
+	}
+
+	return ret;
+}
+#define malloc(...) malloc(__VA_ARGS__),static_assert(false, "Can't use malloc")
+#define calloc(...) calloc(__VA_ARGS__),static_assert(false, "Can't use calloc")
 
 #ifdef _WIN32
 # define export __declspec(dllexport)
 #else
 # define export
 #endif
+
+// stdlib
+export f64 get_time(void);
 
 #endif //STRONGHOLD_H

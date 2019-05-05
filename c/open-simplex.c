@@ -13,10 +13,11 @@
  *   of any particular randomization library, so results
  *   will be the same when ported to other languages.
  */
-#include <string.h>
 #include <errno.h>
 
 #include "stronghold.h"
+
+#include "open-simplex.h"
 
 #define STRETCH_CONSTANT_2D (-0.211324865405187)    /* (1 / sqrt(2 + 1) - 1 ) / 2; */
 #define SQUISH_CONSTANT_2D  (0.366025403784439)     /* (sqrt(2 + 1) -1) / 2; */
@@ -31,10 +32,10 @@
 
 #define DEFAULT_SEED (0LL)
 
-struct osn_context {
+typedef struct noise_ctx {
 	i16 *perm;
 	i16 *permGradIndex3D;
-};
+} noise_ctx;
 
 #define ARRAYSIZE(x) (sizeof((x)) / sizeof((x)[0]))
 
@@ -91,14 +92,14 @@ static const i8 gradients4D[] = {
 	-3, -1, -1, -1,     -1, -3, -1, -1,     -1, -1, -3, -1,     -1, -1, -1, -3,
 };
 
-static f64 extrapolate2(struct osn_context *ctx, i32 xsb, i32 ysb, f64 dx, f64 dy) {
+static f64 extrapolate2(noise_ctx *ctx, i32 xsb, i32 ysb, f64 dx, f64 dy) {
 	i16 *perm = ctx->perm;
 	i32 index = perm[(perm[xsb & 0xFF] + ysb) & 0xFF] & 0x0E;
 	return gradients2D[index] * dx
 		+ gradients2D[index + 1] * dy;
 }
 
-static f64 extrapolate3(struct osn_context *ctx, i32 xsb, i32 ysb, i32 zsb, f64 dx, f64 dy, f64 dz) {
+static f64 extrapolate3(noise_ctx *ctx, i32 xsb, i32 ysb, i32 zsb, f64 dx, f64 dy, f64 dz) {
 	i16 *perm = ctx->perm;
 	i16 *permGradIndex3D = ctx->permGradIndex3D;
 	i32 index = permGradIndex3D[(perm[(perm[xsb & 0xFF] + ysb) & 0xFF] + zsb) & 0xFF];
@@ -107,7 +108,7 @@ static f64 extrapolate3(struct osn_context *ctx, i32 xsb, i32 ysb, i32 zsb, f64 
 		+ gradients3D[index + 2] * dz;
 }
 
-static f64 extrapolate4(struct osn_context *ctx, i32 xsb, i32 ysb, i32 zsb, i32 wsb, f64 dx, f64 dy, f64 dz, f64 dw) {
+static f64 extrapolate4(noise_ctx *ctx, i32 xsb, i32 ysb, i32 zsb, i32 wsb, f64 dx, f64 dy, f64 dz, f64 dw) {
 	i16 *perm = ctx->perm;
 	i32 index = perm[(perm[(perm[(perm[xsb & 0xFF] + ysb) & 0xFF] + zsb) & 0xFF] + wsb) & 0xFF] & 0xFC;
 	return gradients4D[index] * dx
@@ -121,35 +122,25 @@ static inline i32 fastFloor(f64 x) {
 	return x < xi ? xi - 1 : xi;
 }
 
-static i32 allocate_perm(struct osn_context *ctx, i32 nperm, i32 ngrad) {
+static void allocate_perm(noise_ctx *ctx, i32 nperm, i32 ngrad) {
 	if (ctx->perm)
 		free(ctx->perm);
 	if (ctx->permGradIndex3D)
 		free(ctx->permGradIndex3D);
-	ctx->perm = (i16 *) malloc(sizeof(*ctx->perm) * nperm);
-	if (!ctx->perm)
-		return -ENOMEM;
-	ctx->permGradIndex3D = (i16 *) malloc(sizeof(*ctx->permGradIndex3D) * ngrad);
-	if (!ctx->permGradIndex3D) {
-		free(ctx->perm);
-		return -ENOMEM;
-	}
-	return 0;
+	ctx->perm = alloc(sizeof(*ctx->perm) * nperm);
+	ctx->permGradIndex3D = alloc(sizeof(*ctx->permGradIndex3D) * ngrad);
 }
 
-export i32 open_simplex_noise_init_perm(struct osn_context *ctx, i16 p[], i32 nelements) {
-	i32 i, rc;
+export void open_simplex_noise_init_perm(noise_ctx *ctx, i16 p[], i32 nelements) {
+	i32 i;
 
-	rc = allocate_perm(ctx, nelements, 256);
-	if (rc)
-		return rc;
+	allocate_perm(ctx, nelements, 256);
 	memcpy(ctx->perm, p, sizeof(*ctx->perm) * nelements);
 
 	for (i = 0; i < 256; i++) {
 		/* Since 3D has 24 gradients, simple bitmask won't work, so precompute modulo array. */
 		ctx->permGradIndex3D[i] = (i16)((ctx->perm[i] % (ARRAYSIZE(gradients3D) / 3)) * 3);
 	}
-	return 0;
 }
 
 /*
@@ -157,25 +148,18 @@ export i32 open_simplex_noise_init_perm(struct osn_context *ctx, i16 p[], i32 ne
  * Generates a proper permutation (i.e. doesn't merely perform N successive pair
  * swaps on a base array).  Uses a simple 64-bit LCG.
  */
-export i32 open_simplex_noise(i64 seed, struct osn_context **ctx) {
-	i32 rc;
+export void open_simplex_noise(i64 seed, noise_ctx **ctx) {
 	i16 source[256];
 	i32 i;
 	i16 *perm;
 	i16 *permGradIndex3D;
 	i32 r;
 
-	*ctx = (struct osn_context *) malloc(sizeof(**ctx));
-	if (!(*ctx))
-		return -ENOMEM;
+	*ctx = alloc(sizeof(**ctx));
 	(*ctx)->perm = NULL;
 	(*ctx)->permGradIndex3D = NULL;
 
-	rc = allocate_perm(*ctx, 256, 256);
-	if (rc) {
-		free(*ctx);
-		return rc;
-	}
+	allocate_perm(*ctx, 256, 256);
 
 	perm = (*ctx)->perm;
 	permGradIndex3D = (*ctx)->permGradIndex3D;
@@ -194,10 +178,9 @@ export i32 open_simplex_noise(i64 seed, struct osn_context **ctx) {
 		permGradIndex3D[i] = (i16)((perm[i] % (ARRAYSIZE(gradients3D) / 3)) * 3);
 		source[r] = source[i];
 	}
-	return 0;
 }
 
-export void open_simplex_noise_free(struct osn_context *ctx) {
+export void open_simplex_noise_free(noise_ctx *ctx) {
 	if (!ctx)
 		return;
 	if (ctx->perm) {
@@ -212,7 +195,7 @@ export void open_simplex_noise_free(struct osn_context *ctx) {
 }
 
 /* 2D OpenSimplex (Simplectic) Noise. */
-export f64 open_simplex_noise2(struct osn_context *ctx, f64 x, f64 y) {
+export f64 open_simplex_noise2(noise_ctx *ctx, f64 x, f64 y) {
 
 	/* Place input coordinates onto grid. */
 	f64 stretchOffset = (x + y) * STRETCH_CONSTANT_2D;
@@ -339,7 +322,7 @@ export f64 open_simplex_noise2(struct osn_context *ctx, f64 x, f64 y) {
 /*
  * 3D OpenSimplex (Simplectic) Noise
  */
-export f64 open_simplex_noise3(struct osn_context *ctx, f64 x, f64 y, f64 z) {
+export f64 open_simplex_noise3(noise_ctx *ctx, f64 x, f64 y, f64 z) {
 
 	/* Place input coordinates on simplectic honeycomb. */
 	f64 stretchOffset = (x + y + z) * STRETCH_CONSTANT_3D;
@@ -911,7 +894,7 @@ export f64 open_simplex_noise3(struct osn_context *ctx, f64 x, f64 y, f64 z) {
 /*
  * 4D OpenSimplex (Simplectic) Noise.
  */
-export f64 open_simplex_noise4(struct osn_context *ctx, f64 x, f64 y, f64 z, f64 w) {
+export f64 open_simplex_noise4(noise_ctx *ctx, f64 x, f64 y, f64 z, f64 w) {
 	f64 uins;
 	f64 dx1, dy1, dz1, dw1;
 	f64 dx2, dy2, dz2, dw2;

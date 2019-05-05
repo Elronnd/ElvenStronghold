@@ -6,7 +6,7 @@ echo ; function GOTO { true; } # > NUL
 GOTO WIN
 # WSL
 if (cat /proc/version|grep -i microsoft > /dev/null); then
-	P6C="powershell.exe -c perl6"
+	P6C="powershell.exe -c perl6 --profile"
 	lib_prefix=
 	lib_suffix=dll
 else
