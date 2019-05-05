@@ -4,6 +4,8 @@ lib
 
 *.so
 *.dll
+*.exp
+*.lib
 *.o
 
 .precomp

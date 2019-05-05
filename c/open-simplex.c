@@ -19,6 +19,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "stronghold.h"
+
 #define STRETCH_CONSTANT_2D (-0.211324865405187)    /* (1 / sqrt(2 + 1) - 1 ) / 2; */
 #define SQUISH_CONSTANT_2D  (0.366025403784439)     /* (sqrt(2 + 1) -1) / 2; */
 #define STRETCH_CONSTANT_3D (-1.0 / 6.0)            /* (1 / sqrt(3 + 1) - 1) / 3; */
@@ -92,16 +94,14 @@ static const signed char gradients4D[] = {
 	-3, -1, -1, -1,     -1, -3, -1, -1,     -1, -1, -3, -1,     -1, -1, -1, -3,
 };
 
-static double extrapolate2(struct osn_context *ctx, int xsb, int ysb, double dx, double dy)
-{
+static double extrapolate2(struct osn_context *ctx, int xsb, int ysb, double dx, double dy) {
 	int16_t *perm = ctx->perm;
 	int index = perm[(perm[xsb & 0xFF] + ysb) & 0xFF] & 0x0E;
 	return gradients2D[index] * dx
 		+ gradients2D[index + 1] * dy;
 }
 
-static double extrapolate3(struct osn_context *ctx, int xsb, int ysb, int zsb, double dx, double dy, double dz)
-{
+static double extrapolate3(struct osn_context *ctx, int xsb, int ysb, int zsb, double dx, double dy, double dz) {
 	int16_t *perm = ctx->perm;
 	int16_t *permGradIndex3D = ctx->permGradIndex3D;
 	int index = permGradIndex3D[(perm[(perm[xsb & 0xFF] + ysb) & 0xFF] + zsb) & 0xFF];
@@ -110,8 +110,7 @@ static double extrapolate3(struct osn_context *ctx, int xsb, int ysb, int zsb, d
 		+ gradients3D[index + 2] * dz;
 }
 
-static double extrapolate4(struct osn_context *ctx, int xsb, int ysb, int zsb, int wsb, double dx, double dy, double dz, double dw)
-{
+static double extrapolate4(struct osn_context *ctx, int xsb, int ysb, int zsb, int wsb, double dx, double dy, double dz, double dw) {
 	int16_t *perm = ctx->perm;
 	int index = perm[(perm[(perm[(perm[xsb & 0xFF] + ysb) & 0xFF] + zsb) & 0xFF] + wsb) & 0xFF] & 0xFC;
 	return gradients4D[index] * dx
@@ -125,8 +124,7 @@ static inline int fastFloor(double x) {
 	return x < xi ? xi - 1 : xi;
 }
 
-static int allocate_perm(struct osn_context *ctx, int nperm, int ngrad)
-{
+static int allocate_perm(struct osn_context *ctx, int nperm, int ngrad) {
 	if (ctx->perm)
 		free(ctx->perm);
 	if (ctx->permGradIndex3D)
@@ -142,8 +140,7 @@ static int allocate_perm(struct osn_context *ctx, int nperm, int ngrad)
 	return 0;
 }
 
-int open_simplex_noise_init_perm(struct osn_context *ctx, int16_t p[], int nelements)
-{
+export int open_simplex_noise_init_perm(struct osn_context *ctx, int16_t p[], int nelements) {
 	int i, rc;
 
 	rc = allocate_perm(ctx, nelements, 256);
@@ -163,8 +160,7 @@ int open_simplex_noise_init_perm(struct osn_context *ctx, int16_t p[], int nelem
  * Generates a proper permutation (i.e. doesn't merely perform N successive pair
  * swaps on a base array).  Uses a simple 64-bit LCG.
  */
-int open_simplex_noise(int64_t seed, struct osn_context **ctx)
-{
+export int open_simplex_noise(int64_t seed, struct osn_context **ctx) {
 	int rc;
 	int16_t source[256];
 	int i;
@@ -204,8 +200,7 @@ int open_simplex_noise(int64_t seed, struct osn_context **ctx)
 	return 0;
 }
 
-void open_simplex_noise_free(struct osn_context *ctx)
-{
+export void open_simplex_noise_free(struct osn_context *ctx) {
 	if (!ctx)
 		return;
 	if (ctx->perm) {
@@ -220,8 +215,7 @@ void open_simplex_noise_free(struct osn_context *ctx)
 }
 
 /* 2D OpenSimplex (Simplectic) Noise. */
-double open_simplex_noise2(struct osn_context *ctx, double x, double y)
-{
+export double open_simplex_noise2(struct osn_context *ctx, double x, double y) {
 
 	/* Place input coordinates onto grid. */
 	double stretchOffset = (x + y) * STRETCH_CONSTANT_2D;
@@ -348,8 +342,7 @@ double open_simplex_noise2(struct osn_context *ctx, double x, double y)
 /*
  * 3D OpenSimplex (Simplectic) Noise
  */
-double open_simplex_noise3(struct osn_context *ctx, double x, double y, double z)
-{
+export double open_simplex_noise3(struct osn_context *ctx, double x, double y, double z) {
 
 	/* Place input coordinates on simplectic honeycomb. */
 	double stretchOffset = (x + y + z) * STRETCH_CONSTANT_3D;
@@ -921,8 +914,7 @@ double open_simplex_noise3(struct osn_context *ctx, double x, double y, double z
 /*
  * 4D OpenSimplex (Simplectic) Noise.
  */
-double open_simplex_noise4(struct osn_context *ctx, double x, double y, double z, double w)
-{
+export double open_simplex_noise4(struct osn_context *ctx, double x, double y, double z, double w) {
 	double uins;
 	double dx1, dy1, dz1, dw1;
 	double dx2, dy2, dz2, dw2;

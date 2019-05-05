@@ -3,6 +3,8 @@ unit module sdl;
 use SDL2::Raw;
 use NativeCall;
 
+use tex;
+
 ENTER die "couldn't initialize SDL2: '{SDL_GetError}'" if SDL_Init(VIDEO) != 0;
 LEAVE SDL_Quit;
 
@@ -42,22 +44,24 @@ class SDL is export {
 		SDL_DestroyWindow($.window);
 	}
 	method get-tex($w, $h) {
-		SDL_CreateTexture($.renderer, %PIXELFORMAT<RGB24>, STREAMING, $w, $h);
-	}
-	method get-framebuffer($tex) {
+		my Tex $ret .= new(:$w, :$h, tex => SDL_CreateTexture($.renderer, %PIXELFORMAT<RGB24>, STREAMING, $w, $h));
+
 		my int32 $pitch;
 		my $pixdatabuf = CArray[int64].new(0, 1234, 1234, 1234);
 		my $pixdata = nativecast(Pointer[int64], $pixdatabuf);
-		SDL_LockTexture($tex, SDL_Rect, $pixdata, $pitch);
-		return nativecast(CArray[uint8], Pointer.new($pixdatabuf[0])), $pitch;
+		SDL_LockTexture($ret.tex, SDL_Rect, $pixdata, $pitch);
+		$ret.framebuffer = nativecast(CArray[uint8], Pointer.new($pixdatabuf[0]));
+		return $ret;
 	}
 	# writes the texture onto the framebuffer at position (x,  y)
-	method write-tex($tex, $x, $y) {
-		SDL_UnlockTexture($tex);
-		my int32 ($w, $h);
-		my uint32 $pass;
-		my uint32 $access = STREAMING;
-		SDL_QueryTexture($tex, $pass, $access, $w, $h);
-		SDL_RenderCopy($.renderer, $tex, SDL_Rect, SDL_Rect.new(:$x, :$y, :$w, :$h));
+	method write-tex($tex is rw, $x, $y) {
+		SDL_UnlockTexture($tex.tex);
+		SDL_RenderCopy($.renderer, $tex.tex, SDL_Rect, SDL_Rect.new(:$x, :$y, w => $tex.w, h => $tex.h));
+
+		my int32 $pitch;
+		my $pixdatabuf = CArray[int64].new(0, 1234, 1234, 1234);
+		my $pixdata = nativecast(Pointer[int64], $pixdatabuf);
+		SDL_LockTexture($tex.tex, SDL_Rect, $pixdata, $pitch);
+		$tex.framebuffer = nativecast(CArray[uint8], Pointer.new($pixdatabuf[0]));
 	}
 }

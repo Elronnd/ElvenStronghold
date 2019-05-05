@@ -1,7 +1,8 @@
 CC := clang
 LD := $(CC)
 CFLAGS := -std=c17 -Wall -Wextra -g -O2 -c
-OBJ := open-simplex.o
+OBJ := open-simplex.o fbnice.o
+HDR := stronghold.h
 
 ifeq ($(OS),Windows_NT)
 	LIBNAME := stronghold.dll
@@ -19,7 +20,7 @@ default: all
 
 all: $(LIBNAME)
 
-$(LIBNAME): $(OBJ)
+$(LIBNAME): $(OBJ) $(HDR)
 	$(LD) -shared -o $(LIBNAME) $(OBJ)
 
 clean:
