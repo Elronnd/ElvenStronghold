@@ -8,6 +8,7 @@ use tex;
 ENTER die "couldn't initialize SDL2: '{SDL_GetError}'" if SDL_Init(VIDEO) != 0;
 LEAVE SDL_Quit;
 
+# @dependency: remove this once upstream SDL2::Raw gets it
 sub SDL_QueryTexture(SDL_Texture $tex, uint32 $format is rw, int32 $access is rw, int32 $w is rw, int32 $h is rw) is native("SDL2") { * }
 
 class SDL is export {
