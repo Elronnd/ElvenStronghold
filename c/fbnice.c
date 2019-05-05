@@ -1,8 +1,3 @@
-#include <stdlib.h>
-#include <stdint.h>
-#include <time.h>
-#include <stdio.h>
-
 #include "stronghold.h"
 
 export void do_fbnice(uint8_t *bytes, uint64_t len) {

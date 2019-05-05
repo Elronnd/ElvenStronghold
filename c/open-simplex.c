@@ -13,9 +13,6 @@
  *   of any particular randomization library, so results
  *   will be the same when ported to other languages.
  */
-#include <math.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <errno.h>
 
@@ -35,8 +32,8 @@
 #define DEFAULT_SEED (0LL)
 
 struct osn_context {
-	int16_t *perm;
-	int16_t *permGradIndex3D;
+	i16 *perm;
+	i16 *permGradIndex3D;
 };
 
 #define ARRAYSIZE(x) (sizeof((x)) / sizeof((x)[0]))
@@ -45,7 +42,7 @@ struct osn_context {
  * Gradients for 2D. They approximate the directions to the
  * vertices of an octagon from the center.
  */
-static const int8_t gradients2D[] = {
+static const i8 gradients2D[] = {
 	 5,  2,    2,  5,
 	-5,  2,   -2,  5,
 	 5, -2,    2, -5,
@@ -58,7 +55,7 @@ static const int8_t gradients2D[] = {
  * that the triangular and square facets can be inscribed inside
  * circles of the same radius.
  */
-static const signed char gradients3D[] = {
+static const i8 gradients3D[] = {
 	-11,  4,  4,     -4,  11,  4,    -4,  4,  11,
 	 11,  4,  4,      4,  11,  4,     4,  4,  11,
 	-11, -4,  4,     -4, -11,  4,    -4, -4,  11,
@@ -75,7 +72,7 @@ static const signed char gradients3D[] = {
  * skewed so that the tetrahedral and cubic facets can be inscribed inside
  * spheres of the same radius.
  */
-static const signed char gradients4D[] = {
+static const i8 gradients4D[] = {
 	 3,  1,  1,  1,      1,  3,  1,  1,      1,  1,  3,  1,      1,  1,  1,  3,
 	-3,  1,  1,  1,     -1,  3,  1,  1,     -1,  1,  3,  1,     -1,  1,  1,  3,
 	 3, -1,  1,  1,      1, -3,  1,  1,      1, -1,  3,  1,      1, -1,  1,  3,
@@ -94,45 +91,45 @@ static const signed char gradients4D[] = {
 	-3, -1, -1, -1,     -1, -3, -1, -1,     -1, -1, -3, -1,     -1, -1, -1, -3,
 };
 
-static double extrapolate2(struct osn_context *ctx, int xsb, int ysb, double dx, double dy) {
-	int16_t *perm = ctx->perm;
-	int index = perm[(perm[xsb & 0xFF] + ysb) & 0xFF] & 0x0E;
+static f64 extrapolate2(struct osn_context *ctx, i32 xsb, i32 ysb, f64 dx, f64 dy) {
+	i16 *perm = ctx->perm;
+	i32 index = perm[(perm[xsb & 0xFF] + ysb) & 0xFF] & 0x0E;
 	return gradients2D[index] * dx
 		+ gradients2D[index + 1] * dy;
 }
 
-static double extrapolate3(struct osn_context *ctx, int xsb, int ysb, int zsb, double dx, double dy, double dz) {
-	int16_t *perm = ctx->perm;
-	int16_t *permGradIndex3D = ctx->permGradIndex3D;
-	int index = permGradIndex3D[(perm[(perm[xsb & 0xFF] + ysb) & 0xFF] + zsb) & 0xFF];
+static f64 extrapolate3(struct osn_context *ctx, i32 xsb, i32 ysb, i32 zsb, f64 dx, f64 dy, f64 dz) {
+	i16 *perm = ctx->perm;
+	i16 *permGradIndex3D = ctx->permGradIndex3D;
+	i32 index = permGradIndex3D[(perm[(perm[xsb & 0xFF] + ysb) & 0xFF] + zsb) & 0xFF];
 	return gradients3D[index] * dx
 		+ gradients3D[index + 1] * dy
 		+ gradients3D[index + 2] * dz;
 }
 
-static double extrapolate4(struct osn_context *ctx, int xsb, int ysb, int zsb, int wsb, double dx, double dy, double dz, double dw) {
-	int16_t *perm = ctx->perm;
-	int index = perm[(perm[(perm[(perm[xsb & 0xFF] + ysb) & 0xFF] + zsb) & 0xFF] + wsb) & 0xFF] & 0xFC;
+static f64 extrapolate4(struct osn_context *ctx, i32 xsb, i32 ysb, i32 zsb, i32 wsb, f64 dx, f64 dy, f64 dz, f64 dw) {
+	i16 *perm = ctx->perm;
+	i32 index = perm[(perm[(perm[(perm[xsb & 0xFF] + ysb) & 0xFF] + zsb) & 0xFF] + wsb) & 0xFF] & 0xFC;
 	return gradients4D[index] * dx
 		+ gradients4D[index + 1] * dy
 		+ gradients4D[index + 2] * dz
 		+ gradients4D[index + 3] * dw;
 }
 
-static inline int fastFloor(double x) {
-	int xi = (int) x;
+static inline i32 fastFloor(f64 x) {
+	i32 xi = (i32) x;
 	return x < xi ? xi - 1 : xi;
 }
 
-static int allocate_perm(struct osn_context *ctx, int nperm, int ngrad) {
+static i32 allocate_perm(struct osn_context *ctx, i32 nperm, i32 ngrad) {
 	if (ctx->perm)
 		free(ctx->perm);
 	if (ctx->permGradIndex3D)
 		free(ctx->permGradIndex3D);
-	ctx->perm = (int16_t *) malloc(sizeof(*ctx->perm) * nperm);
+	ctx->perm = (i16 *) malloc(sizeof(*ctx->perm) * nperm);
 	if (!ctx->perm)
 		return -ENOMEM;
-	ctx->permGradIndex3D = (int16_t *) malloc(sizeof(*ctx->permGradIndex3D) * ngrad);
+	ctx->permGradIndex3D = (i16 *) malloc(sizeof(*ctx->permGradIndex3D) * ngrad);
 	if (!ctx->permGradIndex3D) {
 		free(ctx->perm);
 		return -ENOMEM;
@@ -140,8 +137,8 @@ static int allocate_perm(struct osn_context *ctx, int nperm, int ngrad) {
 	return 0;
 }
 
-export int open_simplex_noise_init_perm(struct osn_context *ctx, int16_t p[], int nelements) {
-	int i, rc;
+export i32 open_simplex_noise_init_perm(struct osn_context *ctx, i16 p[], i32 nelements) {
+	i32 i, rc;
 
 	rc = allocate_perm(ctx, nelements, 256);
 	if (rc)
@@ -150,7 +147,7 @@ export int open_simplex_noise_init_perm(struct osn_context *ctx, int16_t p[], in
 
 	for (i = 0; i < 256; i++) {
 		/* Since 3D has 24 gradients, simple bitmask won't work, so precompute modulo array. */
-		ctx->permGradIndex3D[i] = (int16_t)((ctx->perm[i] % (ARRAYSIZE(gradients3D) / 3)) * 3);
+		ctx->permGradIndex3D[i] = (i16)((ctx->perm[i] % (ARRAYSIZE(gradients3D) / 3)) * 3);
 	}
 	return 0;
 }
@@ -160,13 +157,13 @@ export int open_simplex_noise_init_perm(struct osn_context *ctx, int16_t p[], in
  * Generates a proper permutation (i.e. doesn't merely perform N successive pair
  * swaps on a base array).  Uses a simple 64-bit LCG.
  */
-export int open_simplex_noise(int64_t seed, struct osn_context **ctx) {
-	int rc;
-	int16_t source[256];
-	int i;
-	int16_t *perm;
-	int16_t *permGradIndex3D;
-	int r;
+export i32 open_simplex_noise(i64 seed, struct osn_context **ctx) {
+	i32 rc;
+	i16 source[256];
+	i32 i;
+	i16 *perm;
+	i16 *permGradIndex3D;
+	i32 r;
 
 	*ctx = (struct osn_context *) malloc(sizeof(**ctx));
 	if (!(*ctx))
@@ -184,17 +181,17 @@ export int open_simplex_noise(int64_t seed, struct osn_context **ctx) {
 	permGradIndex3D = (*ctx)->permGradIndex3D;
 
 	for (i = 0; i < 256; i++)
-		source[i] = (int16_t) i;
+		source[i] = (i16) i;
 	seed = seed * 6364136223846793005LL + 1442695040888963407LL;
 	seed = seed * 6364136223846793005LL + 1442695040888963407LL;
 	seed = seed * 6364136223846793005LL + 1442695040888963407LL;
 	for (i = 255; i >= 0; i--) {
 		seed = seed * 6364136223846793005LL + 1442695040888963407LL;
-		r = (int)((seed + 31) % (i + 1));
+		r = (i32)((seed + 31) % (i + 1));
 		if (r < 0)
 			r += (i + 1);
 		perm[i] = source[r];
-		permGradIndex3D[i] = (short)((perm[i] % (ARRAYSIZE(gradients3D) / 3)) * 3);
+		permGradIndex3D[i] = (i16)((perm[i] % (ARRAYSIZE(gradients3D) / 3)) * 3);
 		source[r] = source[i];
 	}
 	return 0;
@@ -215,48 +212,48 @@ export void open_simplex_noise_free(struct osn_context *ctx) {
 }
 
 /* 2D OpenSimplex (Simplectic) Noise. */
-export double open_simplex_noise2(struct osn_context *ctx, double x, double y) {
+export f64 open_simplex_noise2(struct osn_context *ctx, f64 x, f64 y) {
 
 	/* Place input coordinates onto grid. */
-	double stretchOffset = (x + y) * STRETCH_CONSTANT_2D;
-	double xs = x + stretchOffset;
-	double ys = y + stretchOffset;
+	f64 stretchOffset = (x + y) * STRETCH_CONSTANT_2D;
+	f64 xs = x + stretchOffset;
+	f64 ys = y + stretchOffset;
 
 	/* Floor to get grid coordinates of rhombus (stretched square) super-cell origin. */
-	int xsb = fastFloor(xs);
-	int ysb = fastFloor(ys);
+	i32 xsb = fastFloor(xs);
+	i32 ysb = fastFloor(ys);
 
 	/* Skew out to get actual coordinates of rhombus origin. We'll need these later. */
-	double squishOffset = (xsb + ysb) * SQUISH_CONSTANT_2D;
-	double xb = xsb + squishOffset;
-	double yb = ysb + squishOffset;
+	f64 squishOffset = (xsb + ysb) * SQUISH_CONSTANT_2D;
+	f64 xb = xsb + squishOffset;
+	f64 yb = ysb + squishOffset;
 
 	/* Compute grid coordinates relative to rhombus origin. */
-	double xins = xs - xsb;
-	double yins = ys - ysb;
+	f64 xins = xs - xsb;
+	f64 yins = ys - ysb;
 
 	/* Sum those together to get a value that determines which region we're in. */
-	double inSum = xins + yins;
+	f64 inSum = xins + yins;
 
 	/* Positions relative to origin point. */
-	double dx0 = x - xb;
-	double dy0 = y - yb;
+	f64 dx0 = x - xb;
+	f64 dy0 = y - yb;
 
 	/* We'll be defining these inside the next block and using them afterwards. */
-	double dx_ext, dy_ext;
-	int xsv_ext, ysv_ext;
+	f64 dx_ext, dy_ext;
+	i32 xsv_ext, ysv_ext;
 
-	double dx1;
-	double dy1;
-	double attn1;
-	double dx2;
-	double dy2;
-	double attn2;
-	double zins;
-	double attn0;
-	double attn_ext;
+	f64 dx1;
+	f64 dy1;
+	f64 attn1;
+	f64 dx2;
+	f64 dy2;
+	f64 attn2;
+	f64 zins;
+	f64 attn0;
+	f64 attn_ext;
 
-	double value = 0;
+	f64 value = 0;
 
 	/* Contribution (1,0) */
 	dx1 = dx0 - 1 - SQUISH_CONSTANT_2D;
@@ -342,62 +339,62 @@ export double open_simplex_noise2(struct osn_context *ctx, double x, double y) {
 /*
  * 3D OpenSimplex (Simplectic) Noise
  */
-export double open_simplex_noise3(struct osn_context *ctx, double x, double y, double z) {
+export f64 open_simplex_noise3(struct osn_context *ctx, f64 x, f64 y, f64 z) {
 
 	/* Place input coordinates on simplectic honeycomb. */
-	double stretchOffset = (x + y + z) * STRETCH_CONSTANT_3D;
-	double xs = x + stretchOffset;
-	double ys = y + stretchOffset;
-	double zs = z + stretchOffset;
+	f64 stretchOffset = (x + y + z) * STRETCH_CONSTANT_3D;
+	f64 xs = x + stretchOffset;
+	f64 ys = y + stretchOffset;
+	f64 zs = z + stretchOffset;
 
 	/* Floor to get simplectic honeycomb coordinates of rhombohedron (stretched cube) super-cell origin. */
-	int xsb = fastFloor(xs);
-	int ysb = fastFloor(ys);
-	int zsb = fastFloor(zs);
+	i32 xsb = fastFloor(xs);
+	i32 ysb = fastFloor(ys);
+	i32 zsb = fastFloor(zs);
 
 	/* Skew out to get actual coordinates of rhombohedron origin. We'll need these later. */
-	double squishOffset = (xsb + ysb + zsb) * SQUISH_CONSTANT_3D;
-	double xb = xsb + squishOffset;
-	double yb = ysb + squishOffset;
-	double zb = zsb + squishOffset;
+	f64 squishOffset = (xsb + ysb + zsb) * SQUISH_CONSTANT_3D;
+	f64 xb = xsb + squishOffset;
+	f64 yb = ysb + squishOffset;
+	f64 zb = zsb + squishOffset;
 
 	/* Compute simplectic honeycomb coordinates relative to rhombohedral origin. */
-	double xins = xs - xsb;
-	double yins = ys - ysb;
-	double zins = zs - zsb;
+	f64 xins = xs - xsb;
+	f64 yins = ys - ysb;
+	f64 zins = zs - zsb;
 
 	/* Sum those together to get a value that determines which region we're in. */
-	double inSum = xins + yins + zins;
+	f64 inSum = xins + yins + zins;
 
 	/* Positions relative to origin point. */
-	double dx0 = x - xb;
-	double dy0 = y - yb;
-	double dz0 = z - zb;
+	f64 dx0 = x - xb;
+	f64 dy0 = y - yb;
+	f64 dz0 = z - zb;
 
 	/* We'll be defining these inside the next block and using them afterwards. */
-	double dx_ext0, dy_ext0, dz_ext0;
-	double dx_ext1, dy_ext1, dz_ext1;
-	int xsv_ext0, ysv_ext0, zsv_ext0;
-	int xsv_ext1, ysv_ext1, zsv_ext1;
+	f64 dx_ext0, dy_ext0, dz_ext0;
+	f64 dx_ext1, dy_ext1, dz_ext1;
+	i32 xsv_ext0, ysv_ext0, zsv_ext0;
+	i32 xsv_ext1, ysv_ext1, zsv_ext1;
 
-	double wins;
-	int8_t c, c1, c2;
-	int8_t aPoint, bPoint;
-	double aScore, bScore;
-	int aIsFurtherSide;
-	int bIsFurtherSide;
-	double p1, p2, p3;
-	double score;
-	double attn0, attn1, attn2, attn3, attn4, attn5, attn6;
-	double dx1, dy1, dz1;
-	double dx2, dy2, dz2;
-	double dx3, dy3, dz3;
-	double dx4, dy4, dz4;
-	double dx5, dy5, dz5;
-	double dx6, dy6, dz6;
-	double attn_ext0, attn_ext1;
+	f64 wins;
+	i8 c, c1, c2;
+	i8 aPoint, bPoint;
+	f64 aScore, bScore;
+	i32 aIsFurtherSide;
+	i32 bIsFurtherSide;
+	f64 p1, p2, p3;
+	f64 score;
+	f64 attn0, attn1, attn2, attn3, attn4, attn5, attn6;
+	f64 dx1, dy1, dz1;
+	f64 dx2, dy2, dz2;
+	f64 dx3, dy3, dz3;
+	f64 dx4, dy4, dz4;
+	f64 dx5, dy5, dz5;
+	f64 dx6, dy6, dz6;
+	f64 attn_ext0, attn_ext1;
 
-	double value = 0;
+	f64 value = 0;
 	if (inSum <= 1) { /* We're inside the tetrahedron (3-Simplex) at (0,0,0) */
 
 		/* Determine which two of (0,0,1), (0,1,0), (1,0,0) are closest. */
@@ -454,7 +451,7 @@ export double open_simplex_noise3(struct osn_context *ctx, double x, double y, d
 				dz_ext0 = dz_ext1 = dz0 - 1;
 			}
 		} else { /* (0,0,0) is not one of the closest two tetrahedral vertices. */
-			c = (int8_t)(aPoint | bPoint); /* Our two extra vertices are determined by the closest two. */
+			c = (i8)(aPoint | bPoint); /* Our two extra vertices are determined by the closest two. */
 
 			if ((c & 0x01) == 0) {
 				xsv_ext0 = xsb;
@@ -582,7 +579,7 @@ export double open_simplex_noise3(struct osn_context *ctx, double x, double y, d
 				dz_ext0 = dz_ext1 = dz0 - 3 * SQUISH_CONSTANT_3D;
 			}
 		} else { /* (1,1,1) is not one of the closest two tetrahedral vertices. */
-			c = (int8_t)(aPoint & bPoint); /* Our two extra vertices are determined by the closest two. */
+			c = (i8)(aPoint & bPoint); /* Our two extra vertices are determined by the closest two. */
 
 			if ((c & 0x01) != 0) {
 				xsv_ext0 = xsb + 1;
@@ -721,7 +718,7 @@ export double open_simplex_noise3(struct osn_context *ctx, double x, double y, d
 				zsv_ext0 = zsb + 1;
 
 				/* Other extra point is based on the shared axis. */
-				c = (int8_t)(aPoint & bPoint);
+				c = (i8)(aPoint & bPoint);
 				if ((c & 0x01) != 0) {
 					dx_ext1 = dx0 - 2 - 2 * SQUISH_CONSTANT_3D;
 					dy_ext1 = dy0 - 2 * SQUISH_CONSTANT_3D;
@@ -755,7 +752,7 @@ export double open_simplex_noise3(struct osn_context *ctx, double x, double y, d
 				zsv_ext0 = zsb;
 
 				/* Other extra point is based on the omitted axis. */
-				c = (int8_t)(aPoint | bPoint);
+				c = (i8)(aPoint | bPoint);
 				if ((c & 0x01) == 0) {
 					dx_ext1 = dx0 + 1 - SQUISH_CONSTANT_3D;
 					dy_ext1 = dy0 - 1 - SQUISH_CONSTANT_3D;
@@ -914,73 +911,73 @@ export double open_simplex_noise3(struct osn_context *ctx, double x, double y, d
 /*
  * 4D OpenSimplex (Simplectic) Noise.
  */
-export double open_simplex_noise4(struct osn_context *ctx, double x, double y, double z, double w) {
-	double uins;
-	double dx1, dy1, dz1, dw1;
-	double dx2, dy2, dz2, dw2;
-	double dx3, dy3, dz3, dw3;
-	double dx4, dy4, dz4, dw4;
-	double dx5, dy5, dz5, dw5;
-	double dx6, dy6, dz6, dw6;
-	double dx7, dy7, dz7, dw7;
-	double dx8, dy8, dz8, dw8;
-	double dx9, dy9, dz9, dw9;
-	double dx10, dy10, dz10, dw10;
-	double attn0, attn1, attn2, attn3, attn4;
-	double attn5, attn6, attn7, attn8, attn9, attn10;
-	double attn_ext0, attn_ext1, attn_ext2;
-	int8_t c, c1, c2;
-	int8_t aPoint, bPoint;
-	double aScore, bScore;
-	int aIsBiggerSide;
-	int bIsBiggerSide;
-	double p1, p2, p3, p4;
-	double score;
+export f64 open_simplex_noise4(struct osn_context *ctx, f64 x, f64 y, f64 z, f64 w) {
+	f64 uins;
+	f64 dx1, dy1, dz1, dw1;
+	f64 dx2, dy2, dz2, dw2;
+	f64 dx3, dy3, dz3, dw3;
+	f64 dx4, dy4, dz4, dw4;
+	f64 dx5, dy5, dz5, dw5;
+	f64 dx6, dy6, dz6, dw6;
+	f64 dx7, dy7, dz7, dw7;
+	f64 dx8, dy8, dz8, dw8;
+	f64 dx9, dy9, dz9, dw9;
+	f64 dx10, dy10, dz10, dw10;
+	f64 attn0, attn1, attn2, attn3, attn4;
+	f64 attn5, attn6, attn7, attn8, attn9, attn10;
+	f64 attn_ext0, attn_ext1, attn_ext2;
+	i8 c, c1, c2;
+	i8 aPoint, bPoint;
+	f64 aScore, bScore;
+	i32 aIsBiggerSide;
+	i32 bIsBiggerSide;
+	f64 p1, p2, p3, p4;
+	f64 score;
 
 	/* Place input coordinates on simplectic honeycomb. */
-	double stretchOffset = (x + y + z + w) * STRETCH_CONSTANT_4D;
-	double xs = x + stretchOffset;
-	double ys = y + stretchOffset;
-	double zs = z + stretchOffset;
-	double ws = w + stretchOffset;
+	f64 stretchOffset = (x + y + z + w) * STRETCH_CONSTANT_4D;
+	f64 xs = x + stretchOffset;
+	f64 ys = y + stretchOffset;
+	f64 zs = z + stretchOffset;
+	f64 ws = w + stretchOffset;
 
 	/* Floor to get simplectic honeycomb coordinates of rhombo-hypercube super-cell origin. */
-	int xsb = fastFloor(xs);
-	int ysb = fastFloor(ys);
-	int zsb = fastFloor(zs);
-	int wsb = fastFloor(ws);
+	i32 xsb = fastFloor(xs);
+	i32 ysb = fastFloor(ys);
+	i32 zsb = fastFloor(zs);
+	i32 wsb = fastFloor(ws);
 
 	/* Skew out to get actual coordinates of stretched rhombo-hypercube origin. We'll need these later. */
-	double squishOffset = (xsb + ysb + zsb + wsb) * SQUISH_CONSTANT_4D;
-	double xb = xsb + squishOffset;
-	double yb = ysb + squishOffset;
-	double zb = zsb + squishOffset;
-	double wb = wsb + squishOffset;
+	f64 squishOffset = (xsb + ysb + zsb + wsb) * SQUISH_CONSTANT_4D;
+	f64 xb = xsb + squishOffset;
+	f64 yb = ysb + squishOffset;
+	f64 zb = zsb + squishOffset;
+	f64 wb = wsb + squishOffset;
 
 	/* Compute simplectic honeycomb coordinates relative to rhombo-hypercube origin. */
-	double xins = xs - xsb;
-	double yins = ys - ysb;
-	double zins = zs - zsb;
-	double wins = ws - wsb;
+	f64 xins = xs - xsb;
+	f64 yins = ys - ysb;
+	f64 zins = zs - zsb;
+	f64 wins = ws - wsb;
 
 	/* Sum those together to get a value that determines which region we're in. */
-	double inSum = xins + yins + zins + wins;
+	f64 inSum = xins + yins + zins + wins;
 
 	/* Positions relative to origin point. */
-	double dx0 = x - xb;
-	double dy0 = y - yb;
-	double dz0 = z - zb;
-	double dw0 = w - wb;
+	f64 dx0 = x - xb;
+	f64 dy0 = y - yb;
+	f64 dz0 = z - zb;
+	f64 dw0 = w - wb;
 
 	/* We'll be defining these inside the next block and using them afterwards. */
-	double dx_ext0, dy_ext0, dz_ext0, dw_ext0;
-	double dx_ext1, dy_ext1, dz_ext1, dw_ext1;
-	double dx_ext2, dy_ext2, dz_ext2, dw_ext2;
-	int xsv_ext0, ysv_ext0, zsv_ext0, wsv_ext0;
-	int xsv_ext1, ysv_ext1, zsv_ext1, wsv_ext1;
-	int xsv_ext2, ysv_ext2, zsv_ext2, wsv_ext2;
+	f64 dx_ext0, dy_ext0, dz_ext0, dw_ext0;
+	f64 dx_ext1, dy_ext1, dz_ext1, dw_ext1;
+	f64 dx_ext2, dy_ext2, dz_ext2, dw_ext2;
+	i32 xsv_ext0, ysv_ext0, zsv_ext0, wsv_ext0;
+	i32 xsv_ext1, ysv_ext1, zsv_ext1, wsv_ext1;
+	i32 xsv_ext2, ysv_ext2, zsv_ext2, wsv_ext2;
 
-	double value = 0;
+	f64 value = 0;
 	if (inSum <= 1) { /* We're inside the pentachoron (4-Simplex) at (0,0,0,0) */
 
 		/* Determine which two of (0,0,0,1), (0,0,1,0), (0,1,0,0), (1,0,0,0) are closest. */
@@ -1063,7 +1060,7 @@ export double open_simplex_noise4(struct osn_context *ctx, double x, double y, d
 				dw_ext0 = dw_ext1 = dw_ext2 = dw0 - 1;
 			}
 		} else { /* (0,0,0,0) is not one of the closest two pentachoron vertices. */
-			c = (int8_t)(aPoint | bPoint); /* Our three extra vertices are determined by the closest two. */
+			c = (i8)(aPoint | bPoint); /* Our three extra vertices are determined by the closest two. */
 
 			if ((c & 0x01) == 0) {
 				xsv_ext0 = xsv_ext2 = xsb;
@@ -1256,7 +1253,7 @@ export double open_simplex_noise4(struct osn_context *ctx, double x, double y, d
 				dw_ext0 = dw_ext1 = dw_ext2 = dw0 - 4 * SQUISH_CONSTANT_4D;
 			}
 		} else { /* (1,1,1,1) is not one of the closest two pentachoron vertices. */
-			c = (int8_t)(aPoint & bPoint); /* Our three extra vertices are determined by the closest two. */
+			c = (i8)(aPoint & bPoint); /* Our three extra vertices are determined by the closest two. */
 
 			if ((c & 0x01) != 0) {
 				xsv_ext0 = xsv_ext2 = xsb + 1;
@@ -1465,8 +1462,8 @@ export double open_simplex_noise4(struct osn_context *ctx, double x, double y, d
 		/* Where each of the two closest points are determines how the extra three vertices are calculated. */
 		if (aIsBiggerSide == bIsBiggerSide) {
 			if (aIsBiggerSide) { /* Both closest points on the bigger side */
-				c1 = (int8_t)(aPoint | bPoint);
-				c2 = (int8_t)(aPoint & bPoint);
+				c1 = (i8)(aPoint | bPoint);
+				c2 = (i8)(aPoint & bPoint);
 				if ((c1 & 0x01) == 0) {
 					xsv_ext0 = xsb;
 					xsv_ext1 = xsb - 1;
@@ -1546,7 +1543,7 @@ export double open_simplex_noise4(struct osn_context *ctx, double x, double y, d
 				dw_ext2 = dw0;
 
 				/* Other two points are based on the omitted axes. */
-				c = (int8_t)(aPoint | bPoint);
+				c = (i8)(aPoint | bPoint);
 
 				if ((c & 0x01) == 0) {
 					xsv_ext0 = xsb - 1;
@@ -1889,8 +1886,8 @@ export double open_simplex_noise4(struct osn_context *ctx, double x, double y, d
 		/* Where each of the two closest points are determines how the extra three vertices are calculated. */
 		if (aIsBiggerSide == bIsBiggerSide) {
 			if (aIsBiggerSide) { /* Both closest points on the bigger side */
-				c1 = (int8_t)(aPoint & bPoint);
-				c2 = (int8_t)(aPoint | bPoint);
+				c1 = (i8)(aPoint & bPoint);
+				c2 = (i8)(aPoint | bPoint);
 
 				/* Two contributions are permutations of (0,0,0,1) and (0,0,0,2) based on c1 */
 				xsv_ext0 = xsv_ext1 = xsb;
@@ -1961,7 +1958,7 @@ export double open_simplex_noise4(struct osn_context *ctx, double x, double y, d
 				dw_ext2 = dw0 - 1 - 4 * SQUISH_CONSTANT_4D;
 
 				/* Other two points are based on the shared axes. */
-				c = (int8_t)(aPoint & bPoint);
+				c = (i8)(aPoint & bPoint);
 
 				if ((c & 0x01) != 0) {
 					xsv_ext0 = xsb + 2;

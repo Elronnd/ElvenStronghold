@@ -1,6 +1,6 @@
 CC := clang
 LD := $(CC)
-CFLAGS := -std=c17 -Wall -Wextra -g -O2 -c
+CFLAGS := -std=c17 -Wall -Wextra -Ofast -ffast-math -finline-functions -c
 OBJ := open-simplex.o fbnice.o
 HDR := stronghold.h
 
@@ -20,7 +20,9 @@ default: all
 
 all: $(LIBNAME)
 
-$(LIBNAME): $(OBJ) $(HDR)
+$(OBJ): $(HDR)
+
+$(LIBNAME): $(OBJ)
 	$(LD) -shared -o $(LIBNAME) $(OBJ)
 
 clean:

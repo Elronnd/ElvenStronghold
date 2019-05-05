@@ -31,5 +31,19 @@ IO::Notification.watch-path('.').act( -> $ev {
 });
 
 loop {
-	last if prompt("> ") eq "q";
+	given prompt("> ") {
+		when "c" { run "make", "clean"; proceed; }
+		when "b"|"c" {
+			run "pwsh.exe", "-c", "make";
+
+		}
+		when "q" { last; }
+	}
+
+	CATCH {
+		default {
+			say "Unknown error.";
+			print "> ";
+		}
+	}
 }

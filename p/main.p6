@@ -15,7 +15,6 @@ until $done {
 				$done = True;
 			}
 			default {
-				.say;
 			}
 		}
 	}
