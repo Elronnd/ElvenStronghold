@@ -5,8 +5,8 @@ use NativeCall;
 
 sub do_fbnice(CArray[uint8], uint32, uint32) is native("stronghold") { ... };
 
-my $sdl = SDL.new("Elven Stronghold", 320, 240);
-my $tex = $sdl.get-tex(320, 240);
+my $sdl = SDL.new("Elven Stronghold", 600, 400);
+my $tex = $sdl.get-tex(600, 400);
 my $done = False;
 until $done {
 	for $sdl.poll {
@@ -20,7 +20,7 @@ until $done {
 	}
 
 
-	do_fbnice($tex.framebuffer, 320, 240);
+	do_fbnice($tex.framebuffer, 600, 400);
 	$sdl.write-tex($tex, 0, 0);
 
 	$sdl.blit;

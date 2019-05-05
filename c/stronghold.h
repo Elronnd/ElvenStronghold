@@ -14,7 +14,15 @@
 # define static_assert _Static_assert
 #endif
 
+#ifdef _WIN32
+# define export __declspec(dllexport)
+#else
+# define export
+#endif
 
+
+
+/// BEGIN type definitions {
 typedef uint8_t u8;
 typedef int8_t i8;
 typedef uint16_t u16;
@@ -23,6 +31,13 @@ typedef uint32_t u32;
 typedef int32_t i32;
 typedef uint64_t u64;
 typedef int64_t i64;
+#ifndef __SIZEOF_INT128__
+# error Need 128-bit numbers.
+#endif
+typedef __uint128_t u128;
+typedef __int128_t i128;
+static_assert(sizeof(i128) == 16 && sizeof(u128) == 16, "__(u)int128 is not 128 bits??"); //@portability: is this actually needed?  I'm dubious of the quality of a __int128_t, but is that justified?
+
 typedef float f32;
 typedef double f64;
 //typedef long double f80; //@portability: what about places where long double isn't 80 bits?
@@ -53,6 +68,12 @@ typedef ssize_t isz;
 #define size_t t_bad(size_t)
 #define ssize_t t_bad(ssize_t)
 #undef t_bad
+/// END type definitions }
+
+
+/// BEGIN replacements for standard c constructs and functions {
+#define loop while(true)
+#define cast(T) (T)
 
 inline void *alloc(usz sz) {
 	void *ret = calloc(1, sz);
@@ -65,14 +86,24 @@ inline void *alloc(usz sz) {
 }
 #define malloc(...) malloc(__VA_ARGS__),static_assert(false, "Can't use malloc")
 #define calloc(...) calloc(__VA_ARGS__),static_assert(false, "Can't use calloc")
-
-#ifdef _WIN32
-# define export __declspec(dllexport)
-#else
-# define export
-#endif
+/// END replacements for standard c constructs and functions }
 
 // stdlib
+//*time*
 export f64 get_time(void);
+
+//*randomness*
+typedef struct {
+	u128 state, inc;
+} RngState;
+
+export u64 random(RngState *state);
+export u64 rnb(RngState *state, u64 bound);
+export void seed_random(RngState *state, u128 initstate, u128 initseq);
+// [min, max)
+// function because if it were a macro, then 'min' would appear twice, and its side effects—if any—would occur twice
+inline u64 rnr(RngState *state, u64 min, u64 max) {
+	return rnb(state, max - min) + min;
+}
 
 #endif //STRONGHOLD_H

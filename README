@@ -8,6 +8,8 @@ A brief summary of it, not intended to be actual licensing, but to help you unde
 * You can't pretend you made it
 * If you change it, you can't take out the license
 * If it messes up your computer, it's not our fault
+Please note that the Permuated Congruential Generator (PCG) implementation used is licensed under the Apache license—it comes from https://github.com/imneme/pcg-c.
 
 Thank you to:
-* Stephen Cameron, for making the version of opensimplex (https://github.com/smcameron/open-simplex-noise-in-c) we use
+* Stephen Cameron, for making the version of opensimplex (https://github.com/smcameron/open-simplex-noise-in-c) we use.
+* Melissa E. O'Neill, for making the PCG randomness algorithm and implementation (https://github.com/imneme/pcg-c)

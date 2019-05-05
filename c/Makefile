@@ -3,8 +3,8 @@ LD := $(CC)
 # the keyword-macro warning occurs when you try to use a macro to redefine a keyword (like 'int')
 # you're not supposed to do that.  But I want to  ¯\_(ツ)_/¯
 CFLAGS := -std=c17 -Wall -Wextra -Wpedantic -Wno-keyword-macro -Werror -Ofast -ffast-math -finline-functions -c
-OBJ := open-simplex.o fbnice.o stronghold.o
-HDR := stronghold.h open-simplex.h
+OBJ := fbnice.o open-simplex.o pcg.o time.o
+HDR := open-simplex.h stronghold.h
 
 ifeq ($(OS),Windows_NT)
 	LIBNAME := stronghold.dll
@@ -25,7 +25,7 @@ all: $(LIBNAME)
 $(OBJ): $(HDR)
 
 $(LIBNAME): $(OBJ)
-	$(LD) -shared -o $(LIBNAME) $(OBJ)
+	$(LD) -shared $(OBJ) -o $(LIBNAME)
 
 clean:
 	rm -f *.o *.dll *.so *.dylib
