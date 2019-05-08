@@ -3,10 +3,12 @@ use rng;
 use SDL2::Raw;
 use NativeCall;
 
-sub do_fbnice(CArray[uint8], uint32, uint32) is native("stronghold") { ... };
+sub do_fbnice(CArray[uint8], uint16, uint16, uint16) is native("stronghold") { ... };
+constant $w = 320;
+constant $h = 240;
 
-my $sdl = SDL.new("Elven Stronghold", 600, 400);
-my $tex = $sdl.get-tex(600, 400);
+my $sdl = SDL.new("Elven Stronghold", $w, $h);
+my $tex = $sdl.get-tex($w, $h);
 my $done = False;
 until $done {
 	for $sdl.poll {
@@ -20,7 +22,7 @@ until $done {
 	}
 
 
-	do_fbnice($tex.framebuffer, 600, 400);
+	do_fbnice($tex.framebuffer, $w, $h, 15);
 	$sdl.write-tex($tex, 0, 0);
 
 	$sdl.blit;

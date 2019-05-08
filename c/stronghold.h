@@ -89,6 +89,7 @@ inline void *alloc(usz sz) {
 /// END replacements for standard c constructs and functions }
 
 // stdlib
+#define M_PI 3.141592653589793238462643383
 //*time*
 export f64 get_time(void);
 
