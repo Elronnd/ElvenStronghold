@@ -2,12 +2,13 @@
 .cache
 lib
 
+*.o
 *.so
 *.dll
+# a visual studio turd:
 *.exp
-*.lib
-*.o
 
+# rakudo turd
 .precomp
 
 # vim turds
