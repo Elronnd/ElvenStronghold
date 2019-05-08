@@ -14,6 +14,8 @@ else
 	fi
 fi
 
+./scripts/fetch-libs.sh # @ux: this takes about a half a second to complete with a full cache.  Is that too much?  Maybe not; perl6 startup time is already pretty bad
+
 cp lib/${lib_prefix}SDL2.$lib_suffix .
 cp c/${lib_prefix}stronghold.$lib_suffix .
 $P6C -Ip p/main.p6

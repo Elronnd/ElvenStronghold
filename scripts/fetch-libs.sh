@@ -50,8 +50,9 @@ f6dedd799cdbc2189976d37daaa23434d0bca79411ac31278e414e1585f4f901  libSDL2.so
 b5b603fd71086b15a81fb294297f634d242519828ba0f20d027d8a2a4d8c4f70  SDL2.dll
 EOF
 	then
-		echo "ERROR!!  Failed to verify the checksums of one or more files"
-		exit 1
+		return 1
+	else
+		return 0
 	fi
 }
 
@@ -61,5 +62,17 @@ pushd lib >/dev/null
 fetch-win
 fetch-mac
 fetch-lin
-check-checksums
+if ! check-checksums; then
+	echo "ERROR!!  Failed to verify the checksums of one or more library binaries"
+	echo "Wiping cache and retrying\!"
+	rm -rf ../.cache
+	fetch-win
+	fetch-mac
+	fetch-lin
+	if ! check-checksums; then
+		echo "Unable to verify checksums.  Please figure out wtf is going on."
+		exit 1
+	fi
+fi
 popd >/dev/null
+exit 0
