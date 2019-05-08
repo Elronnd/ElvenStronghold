@@ -4,7 +4,7 @@ LD := $(CC)
 # you're not supposed to do that.  But I want to  ¯\_(ツ)_/¯
 CFLAGS := -std=c17 -Wall -Wextra -Wpedantic -Wno-keyword-macro -Werror -Ofast -ffast-math -finline-functions -c
 LFLAGS :=
-OBJ := fbnice.o open-simplex.o pcg.o time.o
+OBJ := fbnice.o glad.o open-simplex.o pcg.o stronghold.o time.o
 HDR := open-simplex.h stronghold.h
 
 ifeq ($(OS),Windows_NT)

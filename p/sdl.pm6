@@ -17,6 +17,8 @@ class SDL is export {
 	has $.w;
 	has $.h;
 
+	has $.gl_ctx;
+
 	method new($title, $w, $h) {
 		return self.bless(:$title, :$w, :$h);
 	}
@@ -26,6 +28,8 @@ class SDL is export {
 
 		$!window = SDL_CreateWindow($title, SDL_WINDOWPOS_UNDEFINED_MASK, SDL_WINDOWPOS_UNDEFINED_MASK, $w, $h, OPENGL +| SHOWN);
 		$!renderer = SDL_CreateRenderer($!window, -1, ACCELERATED +| PRESENTVSYNC);
+
+		$!gl_ctx = SDL_GL_CreateContext($!window);
 	}
 
 	method blit {
