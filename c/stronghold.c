@@ -12,7 +12,7 @@ export bool init_stronghold(void) {
 	return true;
 }
 
-export void *alloc(usz sz); {
+export void *alloc(usz sz) {
 	void *ret = calloc(1, sz);
 
 	if (ret == NULL) {
