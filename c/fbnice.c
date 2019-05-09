@@ -49,8 +49,6 @@ export void blit_verts(GlState *state, usz num_tris) {
 	glUseProgram(state->program);
 	glBindVertexArray(state->VAO);
 	glDrawArrays(GL_TRIANGLES, 0, num_tris * 3); // 3 points per triangle
-							// @crash: Xliff says this segfaults?  Probably there are too many triangles asked to be drawn
-							// Or is it fixed?
 
 	glBindVertexArray(0);
 }
