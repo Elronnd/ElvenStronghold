@@ -57,7 +57,6 @@ typedef ssize_t isz;
 // normal types are now illegal
 #define t_bad(T) static_assert(false, "Can't use " #T); T
 //@cleanup: is it justified to outlaw char?  Maybe it should be used for strings?  Or we should make a typedef for strings above?
-#define char t_bad(char)
 #define short t_bad(short)
 #define int t_bad(int)
 #define unsigned t_bad(unsigned)

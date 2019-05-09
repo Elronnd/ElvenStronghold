@@ -33,8 +33,9 @@ class SDL is export {
 	}
 
 	method blit {
-		SDL_RenderPresent($.renderer);
-		SDL_RenderClear($.renderer);
+		SDL_GL_SwapWindow($.window);
+		#SDL_RenderPresent($.renderer);
+		#SDL_RenderClear($.renderer);
 	}
 	method poll {
 		my @ret;

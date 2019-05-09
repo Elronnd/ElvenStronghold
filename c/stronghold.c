@@ -7,6 +7,7 @@ export bool init_stronghold(void) {
 		return false;
 	}
 	printf("Successfully loaded OpenGL version %d.%d/%s\n", GLVersion.major, GLVersion.minor, glGetString(GL_VERSION));
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	return true;
 }
