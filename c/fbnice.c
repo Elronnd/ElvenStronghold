@@ -134,7 +134,7 @@ export void do_fbnice(tri3 *triangles, f32 w, f32 h, f32 dist) {
 			f32 thisx = (x/w - 0.5) * 2;
 			f32 prevx = ((x-dist)/w - 0.5) * 2;
 
-			f32 downx = ((thisx + prevx)/2.0 / w - 0.5) * 2;
+			f32 downx = (thisx + prevx)/2.0;
 			f32 downy = ((y+dist*sin(M_PI/3.0))/h - 0.5) * 2;
 
 			vec3 pt1 = {thisx, thisy, open_simplex_noise3(ctx, 0.08 * thisx, 0.08 * y, get_time()/2)};
