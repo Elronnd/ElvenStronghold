@@ -3,16 +3,18 @@ use rng;
 use SDL2::Raw;
 use NativeCall;
 
-sub do_fbnice(Pointer, num32, num32, num32) is native("stronghold") { ... };
-sub init_stronghold returns bool is native("stronghold") { ... };
-sub make_vectors(num32 $w, num32 $h, num32 $dist, uint32 $num-tris is rw) returns Pointer is native("stronghold") { ... };
-sub do_init_vbo returns Pointer is native("stronghold") { ... };
-sub upload_verts(Pointer $verts, size_t $num-tris) is native("stronghold") { ... };
-sub blit_verts(Pointer $state, size_t $num-tris) is native("stronghold") { ... };
+constant stronghold = 'stronghold';
 
-my num32 $w = 1280e0;
-my num32 $h = 720e0;
-my num32 $dist = 15e0;
+sub do_fbnice(Pointer, num32, num32, num32) is native(stronghold) { ... };
+sub init_stronghold returns bool is native(stronghold) { ... };
+sub make_vectors(num32 $w, num32 $h, num32 $dist, uint32 $num-tris is rw) returns Pointer is native(stronghold) { ... };
+sub do_init_vbo returns Pointer is native(stronghold) { ... };
+sub upload_verts(Pointer $verts, size_t $num-tris) is native(stronghold) { ... };
+sub blit_verts(Pointer $state, size_t $num-tris) is native(stronghold) { ... };
+
+my num32 $w = 640e0;
+my num32 $h = 480e0;
+my num32 $dist = 50e0;
 
 my $sdl = SDL.new("Elven Stronghold", $w, $h);
 die "Unable to initiate" unless init_stronghold;

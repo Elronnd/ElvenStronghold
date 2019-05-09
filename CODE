@@ -3,6 +3,7 @@ Code tags you can grep for/use (without the space after the @) to mark or fix TO
 @ cleanup: code which could/should be cleaner than it is, but isn't yet
 @ dependency: code which can only be improved once a dependency gets an (expected) update
 @ ux: code which may make for a bad user experience
+@ crash: code which crashes
 Add more tags here as necessary.
 
 If you are developing with this, consider running 'scripts/watch-build.p6' in a separate terminal/screen; it will monitor the 'c' directory and re-build the c support library automatically whenever you modify a file.  It also gives you a prompt; you can force (b)uild, (c)lean and build, or (q)uit, from there.

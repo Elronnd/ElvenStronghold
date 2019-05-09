@@ -49,6 +49,9 @@ export void blit_verts(GlState *state, usz num_tris) {
 	glUseProgram(state->program);
 	glBindVertexArray(state->VAO);
 	glDrawArrays(GL_TRIANGLES, 0, num_tris * 3); // 3 points per triangle
+							// @crash: Xliff says this segfaults?  Probably there are too many triangles asked to be drawn
+							// Or is it fixed?
+
 	glBindVertexArray(0);
 }
 
@@ -95,7 +98,7 @@ export GlState *do_init_vbo(void) {
 }
 
 
-export vec3 *make_vectors(f32 w, f32 h, f32 dist, u32 *num_vecs) {
+export tri3 *make_vectors(f32 w, f32 h, f32 dist, u32 *num_vecs) {
 	usz num = 0;
 	for (f32 y = 0; y < h; y += 2 * dist*sin(M_PI/3.0)) {
 		for (f32 x = dist; x < w; x+=dist) {
@@ -103,16 +106,15 @@ export vec3 *make_vectors(f32 w, f32 h, f32 dist, u32 *num_vecs) {
 		}
 	}
 	*num_vecs = num;
-	return alloc(sizeof(vec3) * num);
+	return alloc(sizeof(tri3) * num);
 }
 
 export void do_fbnice(tri3 *triangles, f32 w, f32 h, f32 dist) {
 	if (ctx == NULL) {
 		seed_random(&state, time(0), cast(usz)&ctx);
 		open_simplex_noise(random(&state), &ctx);
+		glClearColor(0, 0, 0, 1);
 	}
-	glClearColor(rnb(&state, 100) / 100.0, rnb(&state, 100) / 100.0, rnb(&state, 100) / 100.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
 
 	usz i = 0;
 	/* equilateral triangles with side length 1
@@ -127,16 +129,18 @@ export void do_fbnice(tri3 *triangles, f32 w, f32 h, f32 dist) {
 	//
 	for (f32 y = 0; y < h; y += 2 * dist*sin(M_PI/3.0)) {
 		for (f32 x = dist; x < w; x+=dist) {
-			f32 thisx = x;
-			f32 prevx = x - dist;
+			// converting from screen space coordinates to NDC
+			f32 thisy = (y/h - 0.5) * 2;
+			f32 thisx = (x/w - 0.5) * 2;
+			f32 prevx = ((x-dist)/w - 0.5) * 2;
 
-			f32 downx = (thisx + prevx) / 2.0;
-			f32 downy = y + dist*sin(M_PI/3.0);
+			f32 downx = ((thisx + prevx)/2.0 / w - 0.5) * 2;
+			f32 downy = ((y+dist*sin(M_PI/3.0))/h - 0.5) * 2;
 
-			vec3 pt1 = {thisx, y, open_simplex_noise3(ctx, 0.08 * thisx, 0.08 * y, get_time()/2)};
-			vec3 pt2 = {prevx, y, open_simplex_noise3(ctx, 0.08 * prevx, 0.08 * y, get_time()/2)};
+			vec3 pt1 = {thisx, thisy, open_simplex_noise3(ctx, 0.08 * thisx, 0.08 * y, get_time()/2)};
+			vec3 pt2 = {prevx, thisy, open_simplex_noise3(ctx, 0.08 * prevx, 0.08 * y, get_time()/2)};
 			vec3 pt3 = {downx, downy, open_simplex_noise3(ctx, 0.08 * downx, 0.08 * downy, get_time()/2)};
-			triangles[i] = cast(tri3){pt1, pt2, pt3};
+			triangles[i++] = cast(tri3){pt1, pt2, pt3};
 		}
 	}
 }
