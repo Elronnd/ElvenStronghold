@@ -1,15 +1,4 @@
 #include "glad.h"
-
-export void *alloc(usz sz) {
-	void *ret = calloc(1, sz);
-
-	if (ret == NULL) {
-		abort();
-	}
-
-	return ret;
-}
-
 #include "stronghold.h"
 
 export bool init_stronghold(void) {
@@ -21,4 +10,14 @@ export bool init_stronghold(void) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	return true;
+}
+export void *alloc(usz sz) {
+#undef calloc
+	void *ret = calloc(1, sz);
+
+	if (ret == NULL) {
+		abort();
+	}
+
+	return ret;
 }

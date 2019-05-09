@@ -13,6 +13,7 @@ ifeq ($(OS),Windows_NT)
 else
 	CFLAGS := $(CFLAGS) -fPIC
 	UNAME := $(shell uname -s)
+	LFLAGS := $(LFLAGS) -ldl
 	ifeq ($(UNAME),Darwin)
 		LIBNAME := libstronghold.dylib
 	else
