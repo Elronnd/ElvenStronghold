@@ -74,15 +74,7 @@ typedef ssize_t isz;
 #define loop while(true)
 #define cast(T) (T)
 
-inline void *alloc(usz sz) {
-	void *ret = calloc(1, sz);
-
-	if (ret == NULL) {
-		abort();
-	}
-
-	return ret;
-}
+export void *alloc(usz sz);
 #define malloc(...) malloc(__VA_ARGS__),static_assert(false, "Can't use malloc")
 #define calloc(...) calloc(__VA_ARGS__),static_assert(false, "Can't use calloc")
 /// END replacements for standard c constructs and functions }
