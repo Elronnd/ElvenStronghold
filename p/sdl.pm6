@@ -26,7 +26,7 @@ sub SDL_QueryTexture(SDL_Texture $tex, uint32 $format is rw, int32 $access is rw
 
 class SDL is export {
 	has $.window;
-	has $.renderer;
+	#has $.renderer;
 	has int32 $.w;
 	has int32 $.h;
 
@@ -38,8 +38,12 @@ class SDL is export {
 	submethod BUILD(:$title, Num() :$w, Num() :$h) {
 		($!w, $!h) = ($w, $h) «+&» 0xffffffff;
 
-		$!window = SDL_CreateWindow($title, SDL_WINDOWPOS_UNDEFINED_MASK, SDL_WINDOWPOS_UNDEFINED_MASK, $!w, $!h, OPENGL +| SHOWN);
-		$!renderer = SDL_CreateRenderer($!window, -1, ACCELERATED +| PRESENTVSYNC);
+		SDL_GL_SetAttribute(CONTEXT_MAJOR_VERSION, 3);
+		SDL_GL_SetAttribute(CONTEXT_MINOR_VERSION, 3);
+		SDL_GL_SetAttribute(CONTEXT_PROFILE_MASK, CONTEXT_PROFILE_CORE);
+
+		$!window = SDL_CreateWindow($title, SDL_WINDOWPOS_UNDEFINED_MASK, SDL_WINDOWPOS_UNDEFINED_MASK, $!w, $!h, OPENGL);
+		#$!renderer = SDL_CreateRenderer($!window, -1, ACCELERATED +| PRESENTVSYNC);
 
 		$!gl_ctx = SDL_GL_CreateContext($!window);
 	}

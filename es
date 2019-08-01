@@ -18,6 +18,6 @@ fi
 
 cp lib/${lib_prefix}SDL2.$lib_suffix .
 cp c/${lib_prefix}stronghold.$lib_suffix .
-$P6C -Ip p/main.p6
+LD_LIBRARY_PATH=. $P6C -Ip p/main.p6
 rm -f ${lib_prefix}SDL2.$lib_suffix
 rm -f ${lib_prefix}stronghold.$lib_suffix

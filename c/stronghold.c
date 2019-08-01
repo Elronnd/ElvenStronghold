@@ -1,8 +1,10 @@
+#include <SDL2/SDL.h>
+
 #include "glad.h"
 #include "stronghold.h"
 
 export bool init_stronghold(void) {
-	if (!gladLoadGL()) {
+	if (!gladLoadGLLoader(&SDL_GL_GetProcAddress)) {
 		puts("ERROR! glad was unable to load OpenGL");
 		return false;
 	}
